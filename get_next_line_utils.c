@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   get_next_line_utils.c                              :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: hcoskun <hcoskun@student.1337.ma>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/07/15 21:04:55 by hcoskun           #+#    #+#             */
+/*   Updated: 2023/07/16 07:16:22 by hcoskun          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "get_next_line.h"
 
 char *ft_strchr(const char *str, int c) {
@@ -63,9 +75,13 @@ char *ft_safe_strnjoin(char *from, char const *to, size_t len_of_to) {
 	char *res;
 	size_t i;
 	size_t j;
-	res = malloc(sizeof(char) * (ft_strlen(from) + len_of_to + 1));
+	
+	res = (char *) malloc(sizeof(char) * (ft_strlen(from) + len_of_to + 1));
 	if (!res)
+	{
+		free(from);
 		return NULL;
+	}
 	i = 0;
 	while (from && from[i]) {
 		res[i] = from[i];
@@ -80,7 +96,7 @@ char *ft_safe_strnjoin(char *from, char const *to, size_t len_of_to) {
 	}
 
 	res[i] = '\0';
-	if (from)
-		free(from);
+	free(from);
 	return res;
 }
+

@@ -1,0 +1,13 @@
+# ninja log v5
+1	88	1689464491000000000	CMakeFiles/42_get_next_line.dir/test.c.o	811caa2631e1c3a7
+1	596	1689463917000000000	CMakeFiles/42_get_next_line.dir/get_next_line.c.o	93ffdaa79f01d277
+1	597	1689463917000000000	CMakeFiles/42_get_next_line.dir/get_next_line_utils.c.o	d89df5efb66c56f5
+88	158	1689464491000000000	42_get_next_line	69b2502885655260
+0	108	1689481590000000000	CMakeFiles/42_get_next_line.dir/get_next_line.c.o	93ffdaa79f01d277
+1	138	1689481590000000000	CMakeFiles/42_get_next_line.dir/get_next_line_utils.c.o	d89df5efb66c56f5
+2	139	1689481590000000000	CMakeFiles/42_get_next_line.dir/test.c.o	811caa2631e1c3a7
+139	199	1689481590000000000	42_get_next_line	69b2502885655260
+1	102	1689481792000000000	CMakeFiles/42_get_next_line.dir/get_next_line.c.o	93ffdaa79f01d277
+102	161	1689481792000000000	42_get_next_line	69b2502885655260
+8	108	1689482151000000000	CMakeFiles/42_get_next_line.dir/get_next_line.c.o	93ffdaa79f01d277
+109	164	1689482151000000000	42_get_next_line	69b2502885655260
