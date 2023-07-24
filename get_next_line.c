@@ -1,94 +1,165 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   get_next_line.c                                    :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: hcoskun <hcoskun@student.42.fr>            +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/07/13 19:17:59 by hamza             #+#    #+#             */
-/*   Updated: 2023/07/16 07:35:48 by hcoskun          ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "get_next_line.h"
 
-int bytes_to_eol(char *buffer, int bytes_read)
+char	*h_strchr(char *str, char c)
 {
-	char	*eol;
-	
-	eol = ft_strchr(buffer, '\n');
-	if (eol && eol - buffer < bytes_read)
-		return eol - buffer + 1;
-	else
-		return bytes_read;
-}
-
-char	*set_last_leftover(char **last_leftover, char *end_of_str)
-{
-	*last_leftover = ft_strdup(end_of_str, ft_strlen(end_of_str) + 1);
-	if (!*last_leftover)
+	if (!str)
 		return (NULL);
-	*end_of_str = '\0';
-	return (*last_leftover);
-}
-char	*put_next_line(int fd, char *buffer)
-{
-	static char	*last_leftover = NULL;
-	char		*line;
-	char		*end_of_line;
-	ssize_t		bytes_read;
-
-	line = last_leftover;
-	end_of_line = NULL;
-	bytes_read = BUFFER_SIZE;
-	while (!end_of_line && bytes_read == BUFFER_SIZE)
+	while(1)
 	{
-		bytes_read = read(fd, buffer, BUFFER_SIZE);
-		if (bytes_read == -1)
-		{
-			last_leftover = NULL;
-			return (free_null(line));
-		}
-
-		line = ft_safe_strnjoin(line, buffer, bytes_to_eol(buffer, bytes_read));
-		if (!line) {
-			last_leftover = NULL;
+		if (*str == c)
+			return (str);
+		if (!*str)
 			return (NULL);
-		}
-		end_of_line = ft_strchr(line, '\n');
+		str++;
 	}
-	if (ft_strlen(line) == 0 && bytes_read == 0)
-	{
-		last_leftover = NULL;
-		return (free_null(line));
-	}
-	last_leftover = NULL;
-	if (end_of_line && !set_last_leftover(&last_leftover, end_of_line + 1))
-	{
-		last_leftover = NULL;
-		return (free_null(line));
-	}
-	return (line);
 }
 
-char	*init_buffer(size_t size)
+char	*abort_pointers(char *buffer, char **str_read, char *line)
 {
-	char	*buffer;
-	
-	buffer = (char *) malloc(size * sizeof(char));
-	if (!buffer)
+	if (line)
+		free(line);
+	if (*str_read)
+	{
+		free(*str_read);
+		*str_read = NULL;
+	}
+	if (buffer)
+		free(buffer);
+	return (NULL);
+}
+
+int		h_strlen(const char *str)
+{
+	int	i;
+
+	if (!str)
+		return 0;
+	i = 0;
+	while (str[i])
+		i++;
+	return (i);
+}
+
+void	h_strlcpy(char *dst, char *str, int size)
+{
+	if (!dst || !str || size <= 0)
+		return;
+	while (--size && *str)
+		*dst++ = *str++;
+	*dst = '\0';
+}
+
+char	*h_strjoin(char *str1, char *str2)
+{
+	char	*result;
+	int		len_of_str1;
+	int		len_of_str2;
+
+	len_of_str1 = h_strlen(str1);
+	len_of_str2 = h_strlen(str2);
+	result = (char *) malloc(sizeof(char) * (len_of_str1 + len_of_str2 + 1));
+	if (result == NULL)
 		return (NULL);
-	buffer[size - 1] = 0;
-	return (buffer);
+	h_strlcpy(result, str1, len_of_str1 + 1);
+	h_strlcpy(result + len_of_str1, str2, len_of_str2 + 1);
+	return result;
+}
+
+char	*h_strndup(char *str, int size)
+{
+	char	*result;
+
+	if (size <= 0)
+		return (NULL);
+	result = (char *) malloc(sizeof(char) * size);
+	if (result == NULL)
+		return (NULL);
+	h_strlcpy(result, str, size);
+	return (result);
+}
+
+int h_linelen(const char *str)
+{
+	int	i;
+
+	if (!str)
+		return 0;
+	i = 0;
+	while (str[i] && str[i] != '\n')
+		i++;
+	return (i);
+}
+
+void	expand_str(char **org, char *append)
+{
+	char	*result;
+
+	result = h_strjoin(*org, append);
+	if (*org)
+		free(*org);
+	*org = result;
 }
 
 char	*get_next_line(int fd)
 {
-	char	*buffer;
-	char	*result;
+	static char *str_read = NULL;
+	char		*eol;
+	ssize_t		bytes_read;
+	char		*buffer;
 
-	buffer = init_buffer(BUFFER_SIZE + 1);
-	result = put_next_line(fd, buffer);
+	//initialize buffer
+	buffer = (char *) malloc(sizeof(char) * (BUFFER_SIZE + 1)); //!
+	if (buffer == NULL)
+		return (NULL);
+
+	//read until reach eol(end of line/file) or get error.
+	eol = NULL;
+	while (1)
+	{
+		eol = h_strchr(str_read, '\n');
+		if (eol)
+			break; //found end of line.
+		bytes_read = read(fd, buffer, BUFFER_SIZE);
+		if (bytes_read == -1)
+			return (abort_pointers(buffer, &str_read, NULL));
+		buffer[bytes_read] = '\0';
+		expand_str(&str_read, buffer); //!
+		if (!str_read)
+			return (abort_pointers(buffer, &str_read, NULL));
+		if (bytes_read != BUFFER_SIZE)
+		{
+			eol = str_read + h_linelen(str_read);
+			break; //found end of line(file).
+		}
+	}
+
+	if (h_strlen(str_read) == 0 && bytes_read == 0)
+		return (abort_pointers(buffer, &str_read, NULL));
+
+	// create line
+	int	line_len = h_linelen(str_read);
+	char *line = h_strndup(str_read, line_len + 1 + (*eol != 0)); //! check eol
+	if (!line)
+		return (abort_pointers(buffer, &str_read, NULL));
+
+	// narrow str_read
+	char *temp;
+	if (*eol) {
+		char *line_start = str_read + line_len + 1;
+		int len_left = h_strlen(line_start);
+		if (len_left == 0) {
+			temp = NULL;
+		} else {
+			temp = h_strndup(line_start, len_left + 1); //!
+			if (temp == NULL)
+				return (abort_pointers(buffer, &str_read, line));
+		}
+	} else {
+		temp = (NULL);
+	}
+	free(str_read);
+	str_read = temp;
+
 	free(buffer);
-	return (result);
+	return (line);
 }

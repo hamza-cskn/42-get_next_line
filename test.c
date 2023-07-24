@@ -13,10 +13,15 @@
 #include "get_next_line.h"
 #include <fcntl.h>
 #include <stdio.h>
+#include <string.h>
 
 int main() {
 	char *line;
-	int fd = open("/Users/hcoskun/Desktop/getnextline/42-get_next_line/test.txt", O_RDONLY);
-	while ((line = get_next_line(fd)))
-		printf("%s", line);
+	int fd = open("/Users/hamza/CLionProjects/getnextline-remake/multiple_nl.txt", O_RDONLY);
+	printf("pid: %d\n", getpid());
+	while ((line = get_next_line(fd))) {
+		printf("'\\%d' (%lu)\n", *line, strlen(line));
+		free(line);
+	}
+	while (1);
 }
