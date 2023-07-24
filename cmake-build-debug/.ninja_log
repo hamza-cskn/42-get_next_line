@@ -1,5 +1,0 @@
-# ninja log v5
-0	52	1689637549050955946	CMakeFiles/getnextline_remake.dir/get_next_line_utils.c.o	53aec4086aee0ca4
-1	58	1689679322254434524	CMakeFiles/getnextline_remake.dir/test.c.o	9621fd88f4eb131e
-4	137	1689705662663893969	CMakeFiles/getnextline_remake.dir/get_next_line.c.o	ef671584fa5d5760
-137	225	1689705662752713435	getnextline_remake	b934e93552bb70f8
