@@ -1,89 +1,23 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   get_next_line.c                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: hcoskun <hcoskun@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/07/25 17:41:04 by hcoskun           #+#    #+#             */
+/*   Updated: 2023/07/25 18:13:50 by hcoskun          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "get_next_line.h"
 
-char	*h_strchr(char *str, char c)
-{
-	if (!str)
-		return (NULL);
-	while(1)
-	{
-		if (*str == c)
-			return (str);
-		if (!*str)
-			return (NULL);
-		str++;
-	}
-}
-
-char	*abort_pointers(char *buffer, char **str_read, char *line)
-{
-	if (line)
-		free(line);
-	if (*str_read)
-	{
-		free(*str_read);
-		*str_read = NULL;
-	}
-	if (buffer)
-		free(buffer);
-	return (NULL);
-}
-
-int		h_strlen(const char *str)
+int	h_linelen(const char *str)
 {
 	int	i;
 
 	if (!str)
-		return 0;
-	i = 0;
-	while (str[i])
-		i++;
-	return (i);
-}
-
-void	h_strlcpy(char *dst, char *str, int size)
-{
-	if (!dst || !str || size <= 0)
-		return;
-	while (--size && *str)
-		*dst++ = *str++;
-	*dst = '\0';
-}
-
-char	*h_strjoin(char *str1, char *str2)
-{
-	char	*result;
-	int		len_of_str1;
-	int		len_of_str2;
-
-	len_of_str1 = h_strlen(str1);
-	len_of_str2 = h_strlen(str2);
-	result = (char *) malloc(sizeof(char) * (len_of_str1 + len_of_str2 + 1));
-	if (result == NULL)
-		return (NULL);
-	h_strlcpy(result, str1, len_of_str1 + 1);
-	h_strlcpy(result + len_of_str1, str2, len_of_str2 + 1);
-	return result;
-}
-
-char	*h_strndup(char *str, int size)
-{
-	char	*result;
-
-	if (size <= 0)
-		return (NULL);
-	result = (char *) malloc(sizeof(char) * size);
-	if (result == NULL)
-		return (NULL);
-	h_strlcpy(result, str, size);
-	return (result);
-}
-
-int h_linelen(const char *str)
-{
-	int	i;
-
-	if (!str)
-		return 0;
+		return (0);
 	i = 0;
 	while (str[i] && str[i] != '\n')
 		i++;
@@ -93,73 +27,95 @@ int h_linelen(const char *str)
 void	expand_str(char **org, char *append)
 {
 	char	*result;
+	int		len_of_str1;
+	int		len_of_str2;
 
-	result = h_strjoin(*org, append);
+	len_of_str1 = h_strlen(*org);
+	len_of_str2 = h_strlen(append);
+	result = (char *) malloc(sizeof(char) * (len_of_str1 + len_of_str2 + 1));
+	if (result)
+	{
+		h_strlcpy(result, *org, len_of_str1 + 1);
+		h_strlcpy(result + len_of_str1, append, len_of_str2 + 1);
+	}
 	if (*org)
 		free(*org);
 	*org = result;
 }
 
-char	*get_next_line(int fd)
+int	narrow(char *eol, char **str_read)
 {
-	static char *str_read = NULL;
-	char		*eol;
-	ssize_t		bytes_read;
-	char		*buffer;
+	int		len_left;
+	int		line_len;
+	char	*line_start;
+	char	*temp;
 
-	//initialize buffer
-	buffer = (char *) malloc(sizeof(char) * (BUFFER_SIZE + 1)); //!
-	if (buffer == NULL)
-		return (NULL);
+	line_len = h_linelen(*str_read);
+	temp = (NULL);
+	if (*eol)
+	{
+		line_start = *str_read + line_len + 1;
+		len_left = h_strlen(line_start);
+		if (len_left == 0)
+			temp = NULL;
+		else
+		{
+			temp = h_strndup(line_start, len_left + 1);
+			if (temp == NULL)
+				return (0);
+		}
+	}
+	free(*str_read);
+	*str_read = temp;
+	return (1);
+}
 
-	//read until reach eol(end of line/file) or get error.
-	eol = NULL;
+char	*read_line(int fd, char *buffer, char **eol, char **str_read)
+{
+	ssize_t	bytes_read;
+
 	while (1)
 	{
-		eol = h_strchr(str_read, '\n');
-		if (eol)
-			break; //found end of line.
+		*eol = h_strchr(*str_read, '\n');
+		if (*eol)
+			break ;
 		bytes_read = read(fd, buffer, BUFFER_SIZE);
 		if (bytes_read == -1)
-			return (abort_pointers(buffer, &str_read, NULL));
+			return (abort_pointers(buffer, str_read, NULL));
 		buffer[bytes_read] = '\0';
-		expand_str(&str_read, buffer); //!
-		if (!str_read)
-			return (abort_pointers(buffer, &str_read, NULL));
+		expand_str(str_read, buffer);
+		if (!*str_read)
+			return (abort_pointers(buffer, str_read, NULL));
 		if (bytes_read != BUFFER_SIZE)
 		{
-			eol = str_read + h_linelen(str_read);
-			break; //found end of line(file).
+			*eol = *str_read + h_linelen(*str_read);
+			break ;
 		}
 	}
+	if (h_strlen(*str_read) == 0 && bytes_read == 0)
+		return (abort_pointers(buffer, str_read, NULL));
+	return (*str_read);
+}
 
-	if (h_strlen(str_read) == 0 && bytes_read == 0)
-		return (abort_pointers(buffer, &str_read, NULL));
+char	*get_next_line(int fd)
+{
+	static char	*str_read = NULL;
+	char		*eol;
+	char		*buffer;
+	int			line_len;
+	char		*line;
 
-	// create line
-	int	line_len = h_linelen(str_read);
-	char *line = h_strndup(str_read, line_len + 1 + (*eol != 0)); //! check eol
+	buffer = (char *) malloc(sizeof(char) * (BUFFER_SIZE + 1));
+	if (buffer == NULL)
+		return (NULL);
+	if (!read_line(fd, buffer, &eol, &str_read))
+		return (NULL);
+	line_len = h_linelen(str_read);
+	line = h_strndup(str_read, line_len + 1 + (*eol != 0));
 	if (!line)
 		return (abort_pointers(buffer, &str_read, NULL));
-
-	// narrow str_read
-	char *temp;
-	if (*eol) {
-		char *line_start = str_read + line_len + 1;
-		int len_left = h_strlen(line_start);
-		if (len_left == 0) {
-			temp = NULL;
-		} else {
-			temp = h_strndup(line_start, len_left + 1); //!
-			if (temp == NULL)
-				return (abort_pointers(buffer, &str_read, line));
-		}
-	} else {
-		temp = (NULL);
-	}
-	free(str_read);
-	str_read = temp;
-
+	if (!narrow(eol, &str_read))
+		return (abort_pointers(buffer, &str_read, line));
 	free(buffer);
 	return (line);
 }
